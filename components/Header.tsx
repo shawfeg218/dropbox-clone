@@ -8,14 +8,14 @@ export default function Header() {
     <header className="flex items-center justify-between">
       {/* left */}
       <Link href="/" className="flex items-center space-x-2">
-        <div className="bg-[#0160FE] w-fit p-3">
-          <Image alt="logo" src="/img/dropbox_icon.png" className="invert" width={50} height={50} />
+        <div className="bg-[#0160FE] w-fit p-2">
+          <Image alt="logo" src="/img/dropbox_icon.png" className="invert" width={40} height={40} />
         </div>
         <h1 className="font-bold text-2xl">Dropbox</h1>
       </Link>
 
       {/* right */}
-      <div className="flex p-3 space-x-2 items-center">
+      <div className="flex p-2 space-x-4 items-center">
         <ThemeToggler />
         <UserButton afterSignOutUrl="/" />
 
