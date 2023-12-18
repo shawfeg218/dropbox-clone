@@ -1,5 +1,5 @@
 "use client";
-import { db, storage } from "@/firebase";
+import { db, storage } from "@/lib/firebase";
 import { cn } from "@/lib/utils";
 import { useUser } from "@clerk/nextjs";
 import { addDoc, collection, doc, serverTimestamp, updateDoc } from "firebase/firestore";
@@ -34,7 +34,7 @@ export default function Dropzone() {
 
     setLoading(true);
 
-    // add doc to users/userID/files
+    // add doc to users/userID/files/
     const docRef = await addDoc(collection(db, "users", user.id, "files"), {
       userId: user.id,
       fullName: user.fullName,
