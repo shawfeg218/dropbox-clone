@@ -1,6 +1,9 @@
 "use client";
+import { db, storage } from "@/firebase";
 import { cn } from "@/lib/utils";
 import { useUser } from "@clerk/nextjs";
+import { addDoc, collection, doc, serverTimestamp, updateDoc } from "firebase/firestore";
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { useState } from "react";
 import DropzoneComponent from "react-dropzone";
 
@@ -9,7 +12,7 @@ export default function Dropzone() {
   const maxSize = 20000000;
 
   const [loading, setLoading] = useState(false);
-  const { isLoaded, isSignedIn, user } = useUser();
+  const { user } = useUser();
 
   const onDrop = (acceptedFiles: File[]) => {
     acceptedFiles.forEach((file) => {
@@ -30,15 +33,32 @@ export default function Dropzone() {
     if (!user) return;
 
     setLoading(true);
+
+    // add doc to users/userID/files
+    const docRef = await addDoc(collection(db, "users", user.id, "files"), {
+      userId: user.id,
+      fullName: user.fullName,
+      fileName: selectdFile.name,
+      profileImg: user.imageUrl,
+      timestamp: serverTimestamp(),
+      type: selectdFile.type,
+      size: selectdFile.size,
+    });
+
+    // upload file to storage
+    const storageRef = ref(storage, `users/${user.id}/files/${docRef.id}`);
+    await uploadBytes(storageRef, selectdFile);
+    const downloadURL = await getDownloadURL(storageRef);
+    await updateDoc(doc(db, "users", user.id, "files", docRef.id), {
+      downloadURL: downloadURL,
+    });
+
+    setLoading(false);
   };
 
   return (
     <div>
-      <DropzoneComponent
-        minSize={0}
-        maxSize={maxSize}
-        onDrop={(acceptedFiles) => console.log(acceptedFiles)}
-      >
+      <DropzoneComponent minSize={0} maxSize={maxSize} onDrop={onDrop}>
         {({ getRootProps, getInputProps, isDragReject, isDragActive, fileRejections }) => {
           const isFileTooLarge = fileRejections.length > 0 && fileRejections[0].file.size > maxSize;
 
