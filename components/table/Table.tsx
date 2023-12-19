@@ -13,6 +13,8 @@ import {
 import { FileType } from "@/typings";
 import { Button } from "../ui/button";
 import { PencilIcon, TrashIcon } from "lucide-react";
+import { useAppStore } from "@/store/store";
+import { DeleteModal } from "../DeleteModal";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -25,6 +27,26 @@ export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData
     columns,
     getCoreRowModel: getCoreRowModel(),
   });
+
+  const [setIsDeleteModalOpen, setIsRenameModalOpen, setFileId, setFileName] = useAppStore(
+    (state) => [
+      state.setIsDeleteModalOpen,
+      state.setIsRenameModalOpen,
+      state.setFileId,
+      state.setFileName,
+    ]
+  );
+
+  const openDeleteModal = (fileId: string) => {
+    setIsDeleteModalOpen(true);
+    setFileId(fileId);
+  };
+
+  const openRenameModal = (fileId: string, fileName: string) => {
+    setIsRenameModalOpen(true);
+    setFileId(fileId);
+    setFileName(fileName);
+  };
 
   return (
     <div className="rounded-md border">
@@ -48,6 +70,8 @@ export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData
           {table.getRowModel().rows?.length ? (
             table.getRowModel().rows.map((row) => (
               <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
+                <DeleteModal />
+
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id}>
                     {cell.column.id === "timestamp" ? (
@@ -63,7 +87,10 @@ export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData
                     ) : cell.column.id === "fileName" ? (
                       <p
                         onClick={() => {
-                          console.log("rename");
+                          openRenameModal(
+                            (row.original as FileType).id,
+                            (row.original as FileType).fileName
+                          );
                         }}
                         className="underline flex items-center text-blue-500 hover:cursor-pointer"
                       >
@@ -81,7 +108,7 @@ export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData
                   <Button
                     variant={"outline"}
                     onClick={() => {
-                      console.log("delete");
+                      openDeleteModal((row.original as FileType).id);
                     }}
                   >
                     <TrashIcon size={20} />
