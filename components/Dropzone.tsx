@@ -6,6 +6,7 @@ import { addDoc, collection, doc, serverTimestamp, updateDoc } from "firebase/fi
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { useState } from "react";
 import DropzoneComponent from "react-dropzone";
+import { useToast } from "./ui/use-toast";
 
 export default function Dropzone() {
   // max file size 20MB
@@ -13,6 +14,7 @@ export default function Dropzone() {
 
   const [loading, setLoading] = useState(false);
   const { user } = useUser();
+  const { toast } = useToast();
 
   const onDrop = (acceptedFiles: File[]) => {
     acceptedFiles.forEach((file) => {
@@ -34,26 +36,32 @@ export default function Dropzone() {
 
     setLoading(true);
 
-    // add doc to users/userID/files/
-    const docRef = await addDoc(collection(db, "users", user.id, "files"), {
-      userId: user.id,
-      fullName: user.fullName,
-      fileName: selectdFile.name,
-      profileImg: user.imageUrl,
-      timestamp: serverTimestamp(),
-      type: selectdFile.type,
-      size: selectdFile.size,
-    });
+    try {
+      toast({ title: "Uploading file..." });
+      // add doc to users/userID/files/
+      const docRef = await addDoc(collection(db, "users", user.id, "files"), {
+        userId: user.id,
+        fullName: user.fullName,
+        fileName: selectdFile.name,
+        profileImg: user.imageUrl,
+        timestamp: serverTimestamp(),
+        type: selectdFile.type,
+        size: selectdFile.size,
+      });
 
-    // upload file to storage
-    const storageRef = ref(storage, `users/${user.id}/files/${docRef.id}`);
-    await uploadBytes(storageRef, selectdFile);
-    const downloadURL = await getDownloadURL(storageRef);
-    await updateDoc(doc(db, "users", user.id, "files", docRef.id), {
-      downloadURL: downloadURL,
-    });
-
-    setLoading(false);
+      // upload file to storage
+      const storageRef = ref(storage, `users/${user.id}/files/${docRef.id}`);
+      await uploadBytes(storageRef, selectdFile);
+      const downloadURL = await getDownloadURL(storageRef);
+      await updateDoc(doc(db, "users", user.id, "files", docRef.id), {
+        downloadURL: downloadURL,
+      });
+      toast({ title: "File uploaded successfully" });
+    } catch (error) {
+      toast({ title: "Error uploading file", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

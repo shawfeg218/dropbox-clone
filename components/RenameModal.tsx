@@ -8,9 +8,12 @@ import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { useToast } from "./ui/use-toast";
 
 export default function RenameModal() {
   const { user } = useUser();
+  const { toast } = useToast();
+
   const [input, setInput] = useState("");
 
   const [isRenameModalOpen, setIsRenameModalOpen, fileId, fileName] = useAppStore((state) => [
@@ -24,9 +27,11 @@ export default function RenameModal() {
     if (!user || !fileId) return;
 
     try {
+      toast({ title: "Renameing file..." });
       await updateDoc(doc(db, "users", user.id, "files", fileId), { fileName: input });
+      toast({ title: "File renamed successfully" });
     } catch (error) {
-      alert("Error renaming file");
+      toast({ title: "Error renaming file", variant: "destructive" });
     } finally {
       setInput("");
       setIsRenameModalOpen(false);
